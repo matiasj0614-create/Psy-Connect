@@ -9,7 +9,7 @@ services:
     name: psyconnect-api
     runtime: node
     plan: free
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build
+    buildCommand: corepack enable && pnpm install --no-frozen-lockfile && pnpm --filter @workspace/api-server run build
     startCommand: pnpm --filter @workspace/api-server run start
     envVars:
       - key: NODE_VERSION
@@ -34,7 +34,7 @@ services:
   - type: web
     name: psyconnect-web
     runtime: static
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && BASE_PATH=/ PORT=3000 pnpm --filter @workspace/psyconnect run build
+    buildCommand: corepack enable && pnpm install --no-frozen-lockfile && BASE_PATH=/ PORT=3000 pnpm --filter @workspace/psyconnect run build
     staticPublishPath: artifacts/psyconnect/dist/public
     routes:
       - type: rewrite
