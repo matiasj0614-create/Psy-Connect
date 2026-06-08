@@ -1,0 +1,606 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --sage:#4a7c59;--sage-light:#e8f0eb;--sage-mid:#8fb99a;
+  --warm:#c4956a;--warm-light:#f5ede3;--cream:#faf7f2;
+  --bark-light:#8a7264;--stone:#f0ece4;
+  --text:#2e2a25;--text-muted:#7a6f65;
+  --bubble-ai:#f0ece4;--bubble-user:#4a7c59;
+}
+body{background:transparent;font-family:'DM Sans',sans-serif;}
+.phone-wrap{display:flex;justify-content:center;padding:1rem 0 2rem;}
+.phone{width:340px;height:690px;background:var(--cream);border-radius:36px;border:1.5px solid #d4cfc8;overflow:hidden;display:flex;flex-direction:column;}
+.screen{display:none;flex-direction:column;height:100%;}
+.screen.active{display:flex;}
+.logo{font-family:'Lora',serif;font-size:20px;color:var(--sage);font-weight:500;}
+.logo span{color:var(--warm);}
+.chat-header{background:var(--cream);padding:14px 18px 10px;border-bottom:0.5px solid #ddd8d0;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.ai-avatar{width:36px;height:36px;background:var(--sage-light);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.chat-name{font-size:14px;font-weight:500;color:var(--text);}
+.chat-status{font-size:11px;color:var(--sage);font-weight:300;}
+.progress-bar{height:2px;background:#e0dbd3;flex-shrink:0;}
+.progress-fill{height:100%;background:var(--sage);transition:width 0.6s ease;}
+.messages{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;}
+.messages::-webkit-scrollbar{width:3px;}
+.messages::-webkit-scrollbar-thumb{background:#ccc8c0;border-radius:2px;}
+.msg{display:flex;flex-direction:column;max-width:84%;animation:msgIn 0.3s ease;}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.msg.ai{align-self:flex-start;}
+.msg.user{align-self:flex-end;}
+.bubble{padding:11px 14px;border-radius:18px;font-size:13.5px;line-height:1.55;}
+.msg.ai .bubble{background:var(--bubble-ai);color:var(--text);border-bottom-left-radius:5px;}
+.msg.user .bubble{background:var(--bubble-user);color:white;border-bottom-right-radius:5px;}
+.typing-bubble{background:var(--bubble-ai);border-radius:18px;border-bottom-left-radius:5px;padding:13px 16px;display:flex;gap:5px;align-self:flex-start;animation:msgIn 0.3s ease;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--sage-mid);animation:bounce 1.2s infinite;}
+.dot:nth-child(2){animation-delay:0.2s;}
+.dot:nth-child(3){animation-delay:0.4s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+.crisis-banner{background:#fff4f0;border-top:1px solid #f5c4b3;padding:7px 14px;display:flex;align-items:center;gap:8px;font-size:11px;color:#993c1d;flex-shrink:0;}
+.voice-area{padding:10px 14px 15px;border-top:0.5px solid #ddd8d0;background:var(--cream);flex-shrink:0;}
+.top-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mode-toggle{display:flex;gap:6px;}
+.mode-btn{padding:5px 12px;border-radius:20px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;border:0.5px solid #ccc8c0;background:transparent;color:var(--text-muted);transition:all 0.2s;}
+.mode-btn.active{background:var(--sage-light);color:var(--sage);border-color:var(--sage-mid);}
+.gender-toggle{display:flex;background:var(--stone);border:0.5px solid #ccc8c0;border-radius:20px;padding:3px;}
+.gender-opt{padding:4px 10px;border-radius:16px;font-size:11px;cursor:pointer;color:var(--text-muted);font-family:'DM Sans',sans-serif;border:none;background:transparent;transition:all 0.2s;}
+.gender-opt.active{background:white;color:var(--sage);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.voice-center{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.bars{display:flex;align-items:center;gap:3px;height:20px;}
+.bar{width:3px;border-radius:2px;background:var(--sage-mid);transition:height 0.1s ease;}
+.mic-wrap{position:relative;width:76px;height:76px;display:flex;align-items:center;justify-content:center;}
+.ripple{position:absolute;inset:0;border-radius:50%;background:var(--sage);opacity:0;pointer-events:none;}
+.ripple.on{animation:ripple 1.4s ease-out infinite;}
+@keyframes ripple{0%{transform:scale(1);opacity:0.3;}100%{transform:scale(1.6);opacity:0;}}
+.mic-btn{width:66px;height:66px;border-radius:50%;border:2px solid var(--sage-mid);background:var(--sage-light);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;position:relative;z-index:1;user-select:none;}
+.mic-btn:hover{border-color:var(--sage);}
+.mic-btn.listening{background:var(--sage);border-color:var(--sage);}
+.mic-btn.speaking{background:var(--warm-light);border-color:var(--warm);}
+.mic-btn.thinking{background:#f5f5f2;border-color:#ccc;cursor:default;}
+.mic-label{font-size:12px;color:var(--text-muted);text-align:center;max-width:200px;min-height:15px;line-height:1.3;}
+.mic-label.on{color:var(--sage);font-weight:500;}
+.mic-label.speaking{color:var(--warm);font-weight:500;}
+.mic-label.err{color:#c0392b;}
+.privacy-note{font-size:10.5px;color:var(--text-muted);text-align:center;}
+.text-row{display:flex;gap:8px;align-items:flex-end;}
+.chat-input{flex:1;padding:10px 14px;background:var(--stone);border:0.5px solid #ccc8c0;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;resize:none;min-height:38px;max-height:70px;line-height:1.4;}
+.chat-input::placeholder{color:var(--text-muted);}
+.chat-input:focus{border-color:var(--sage-mid);}
+.send-btn{width:38px;height:38px;background:var(--sage);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.send-btn:disabled{background:#b8c9bc;cursor:not-allowed;}
+.qrs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.qr{padding:6px 12px;background:var(--sage-light);border:0.5px solid var(--sage-mid);border-radius:20px;font-size:12px;color:var(--sage);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.qr:hover{background:var(--sage-mid);color:white;}
+.btn-primary{width:100%;padding:15px;background:var(--sage);color:white;border:none;border-radius:16px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;}
+.btn-primary:hover{background:#3d6849;}
+.btn-secondary{width:100%;padding:13px;background:transparent;color:var(--text-muted);border:0.5px solid #ccc8c0;border-radius:16px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;margin-top:10px;}
+.tabs{display:flex;border-bottom:0.5px solid #ddd8d0;margin-bottom:14px;}
+.tab{flex:1;padding:10px;text-align:center;font-size:13px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+.tab.active{color:var(--sage);border-bottom-color:var(--sage);font-weight:500;}
+.pscroll{flex:1;overflow-y:auto;padding:16px;}
+.pscroll::-webkit-scrollbar{width:3px;}
+.pscroll::-webkit-scrollbar-thumb{background:#ccc8c0;border-radius:2px;}
+.pcard{background:white;border:0.5px solid #ddd8d0;border-radius:18px;padding:16px;margin-bottom:12px;}
+.pcard-title{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.8px;color:var(--warm);margin-bottom:10px;}
+.pname{font-family:'Lora',serif;font-size:22px;color:var(--text);margin-bottom:4px;}
+.ptagline{font-size:13px;color:var(--text-muted);line-height:1.5;}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.tag{padding:5px 11px;border-radius:20px;font-size:12px;}
+.tag.s{background:var(--sage-light);color:var(--sage);}
+.tag.w{background:var(--warm-light);color:#8a5e38;}
+.mcard{background:white;border:0.5px solid #ddd8d0;border-radius:18px;padding:14px;margin-bottom:10px;position:relative;}
+.mtop{display:flex;gap:12px;margin-bottom:10px;}
+.avatar{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'Lora',serif;font-size:16px;font-weight:500;flex-shrink:0;}
+.mscore{position:absolute;top:14px;right:14px;background:var(--sage-light);color:var(--sage);font-size:12px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.mwhy{font-size:12.5px;color:var(--bark-light);line-height:1.5;background:var(--stone);padding:9px 11px;border-radius:10px;margin-bottom:10px;font-style:italic;}
+.frow{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-bottom:4px;}
+.fdot{width:6px;height:6px;border-radius:50%;background:var(--sage-mid);flex-shrink:0;}
+.cbtn{width:100%;margin-top:10px;padding:10px;background:var(--sage);color:white;border:none;border-radius:12px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
+</style>
+
+<div class="phone-wrap"><div class="phone">
+
+<!-- WELCOME -->
+<div class="screen active" id="s-welcome" style="flex-direction:column;justify-content:space-between;">
+  <div style="padding:24px 24px 0;">
+    <div class="logo">Psy<span>Connect</span></div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:3px;font-weight:300;">Your guide to finding the right therapist</div>
+  </div>
+  <div style="padding:0 24px;flex:1;display:flex;flex-direction:column;justify-content:center;">
+    <div style="width:64px;height:64px;background:var(--sage-light);border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:22px;">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 4C9.37 4 4 9.37 4 16c0 3.5 1.4 6.67 3.67 9L6 28l3.33-1.33C11.2 27.53 13.55 28 16 28c6.63 0 12-5.37 12-12S22.63 4 16 4z" fill="#4a7c59" opacity="0.2"/><path d="M10 14h12M10 18h8" stroke="#4a7c59" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <div style="font-family:'Lora',serif;font-size:25px;color:var(--text);line-height:1.3;margin-bottom:12px;">Find the therapist who's <em style="color:var(--sage);font-style:italic;">right for you</em></div>
+    <div style="font-size:13.5px;color:var(--text-muted);line-height:1.65;margin-bottom:20px;">Answer a few questions in a private, judgment-free conversation. We'll build your personal profile and match you with therapists who actually fit.</div>
+    <div style="display:flex;flex-direction:column;gap:9px;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--bark-light);"><div style="width:7px;height:7px;border-radius:50%;background:var(--sage-mid);flex-shrink:0;"></div>A private voice or text conversation</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--bark-light);"><div style="width:7px;height:7px;border-radius:50%;background:var(--sage-mid);flex-shrink:0;"></div>Your personal therapist match profile</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--bark-light);"><div style="width:7px;height:7px;border-radius:50%;background:var(--sage-mid);flex-shrink:0;"></div>Curated matches with explained reasoning</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--bark-light);"><div style="width:7px;height:7px;border-radius:50%;background:var(--sage-mid);flex-shrink:0;"></div>Audio is never stored — your privacy protected</div>
+    </div>
+  </div>
+  <div style="padding:0 24px 28px;">
+    <div style="font-size:11.5px;color:var(--text-muted);line-height:1.6;margin-bottom:16px;padding:12px 14px;background:var(--stone);border-radius:12px;">PsyConnect is not a medical service and does not provide diagnoses. If you're in crisis, please contact <strong style="color:var(--text);">988</strong> (Suicide &amp; Crisis Lifeline).</div>
+    <button class="btn-primary" onclick="startChat()">Start my conversation</button>
+    <button class="btn-secondary" onclick="viewSample()">See a sample profile</button>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="screen" id="s-chat" style="flex-direction:column;">
+  <div class="chat-header">
+    <div class="ai-avatar">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" fill="#e8f0eb"/><path d="M7 10c0-1.66 1.34-3 3-3s3 1.34 3 3" stroke="#4a7c59" stroke-width="1.3" stroke-linecap="round"/><circle cx="10" cy="13" r="1" fill="#4a7c59"/></svg>
+    </div>
+    <div style="flex:1;">
+      <div class="chat-name">Sage · PsyConnect</div>
+      <div class="chat-status" id="status">Here to listen</div>
+    </div>
+    <button onclick="viewSample()" style="background:var(--sage-light);border:none;color:var(--sage);font-size:11px;padding:5px 10px;border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;">Skip →</button>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+  <div class="messages" id="messages"></div>
+  <div class="crisis-banner">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#993c1d" stroke-width="1"/><path d="M7 4v4M7 10v.5" stroke="#993c1d" stroke-width="1.2" stroke-linecap="round"/></svg>
+    PsyConnect is not a medical service. In crisis? Call or text <strong style="margin-left:3px;">988</strong>
+  </div>
+  <div class="voice-area">
+    <div class="top-controls">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-voice" onclick="setMode('voice')">🎙 Voice</button>
+        <button class="mode-btn" id="btn-text" onclick="setMode('text')">⌨️ Type</button>
+      </div>
+      <div class="gender-toggle">
+        <button class="gender-opt active" id="g-female" onclick="setGender('female')">♀ Female</button>
+        <button class="gender-opt" id="g-male" onclick="setGender('male')">♂ Male</button>
+      </div>
+    </div>
+
+    <!-- Voice UI -->
+    <div id="voice-ui" class="voice-center">
+      <div class="bars" id="bars">
+        <div class="bar" style="height:4px"></div><div class="bar" style="height:9px"></div>
+        <div class="bar" style="height:5px"></div><div class="bar" style="height:14px"></div>
+        <div class="bar" style="height:7px"></div><div class="bar" style="height:11px"></div>
+        <div class="bar" style="height:4px"></div><div class="bar" style="height:8px"></div>
+      </div>
+      <div class="mic-wrap">
+        <div class="ripple" id="ripple"></div>
+        <div class="mic-btn" id="mic-btn" onclick="handleMicTap()">
+          <svg id="mic-svg" width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect x="9" y="3" width="10" height="15" rx="5" fill="#4a7c59"/>
+            <path d="M5 13c0 4.97 4.03 9 9 9s9-4.03 9-9" stroke="#4a7c59" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="14" y1="22" x2="14" y2="26" stroke="#4a7c59" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="10" y1="26" x2="18" y2="26" stroke="#4a7c59" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="mic-label" id="mic-label">Tap to speak</div>
+      <div class="privacy-note">Audio is never stored — only your words are saved</div>
+    </div>
+
+    <!-- Text UI -->
+    <div id="text-ui" style="display:none;">
+      <div class="qrs" id="qrs"></div>
+      <div class="text-row">
+        <textarea class="chat-input" id="chat-input" placeholder="Share what's on your mind…" rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendText();}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,70)+'px'"></textarea>
+        <button class="send-btn" onclick="sendText()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8L2 2l2.5 6L2 14l12-6z" fill="white"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="screen" id="s-profile" style="flex-direction:column;">
+  <div class="chat-header">
+    <button onclick="goBack()" style="background:none;border:none;cursor:pointer;color:var(--sage);font-size:13px;padding:0;font-family:'DM Sans',sans-serif;">← Back</button>
+    <div style="flex:1;text-align:center;"><div class="logo" style="font-size:16px;">Psy<span>Connect</span></div></div>
+    <div style="width:44px;"></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" id="t-profile" onclick="switchTab('profile')">My Profile</div>
+    <div class="tab" id="t-matches" onclick="switchTab('matches')">Matches (3)</div>
+  </div>
+  <div class="pscroll" id="pscroll">
+    <div id="v-profile">
+      <div class="pcard">
+        <div class="pcard-title">Your profile</div>
+        <div class="pname" id="p-name">Your results</div>
+        <div class="ptagline" id="p-tagline">Complete the conversation to see your profile.</div>
+        <div class="tags" id="p-tags"></div>
+      </div>
+      <div class="pcard"><div class="pcard-title">What you're working through</div><div id="p-challenges" style="font-size:13.5px;color:var(--text);line-height:1.6;"></div></div>
+      <div class="pcard"><div class="pcard-title">What to look for in a therapist</div><div id="p-recs" style="font-size:13.5px;color:var(--text);line-height:1.6;"></div></div>
+      <div class="pcard" style="border-left:3px solid var(--sage);">
+        <div class="pcard-title">Summary for your therapist</div>
+        <div id="p-summary" style="font-size:13px;color:var(--text-muted);line-height:1.6;font-style:italic;"></div>
+        <div style="font-size:11px;color:var(--bark-light);margin-top:10px;">Only shared when you choose to contact a therapist. You can edit this before sending.</div>
+      </div>
+      <button class="btn-primary" style="margin-top:4px;" onclick="switchTab('matches')">See my therapist matches →</button>
+    </div>
+    <div id="v-matches" style="display:none;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5;">Based on your conversation, here are your top matches. We've explained why each one fits.</div>
+      <div id="matches"></div>
+    </div>
+  </div>
+</div>
+
+</div></div>
+
+<script>
+// ── Keys & voices ────────────────────────────────────────
+const XI_KEY = 'sk_98bed2edcca8e9ca6582de52d824fe9b3ae5bb382f953dcb';
+const VOICES  = { female:'EXAVITQu4vr4xnSDxMaL', male:'TX3LPaxmHKxFdv7VOQHJ' };
+
+// ── State ────────────────────────────────────────────────
+let gender      = 'female';
+let mode        = 'voice';
+let fromChat    = false;
+let history     = [];        // Claude conversation history
+let profileData = null;
+let isSpeaking  = false;
+let isListening = false;
+let isThinking  = false;
+let recognition = null;
+let pending     = '';
+let currentAudio= null;
+let barTimer    = null;
+let audioCtx    = null;
+let analyser    = null;
+let micStream   = null;
+let exchangeCount = 0;
+
+const SAGE_SYSTEM = `You are Sage, a warm, empathetic AI guide for PsyConnect — a therapy matching service. Your role is to have a natural, caring conversation to understand what someone is going through and what they need in a therapist.
+
+Your goals across 6–8 conversational exchanges:
+1. Understand what's bringing them here and what they're experiencing
+2. Learn about any previous therapy experience (first time? what worked or didn't?)
+3. Understand how long they've been feeling this way
+4. Understand what they hope to get from therapy / what "better" looks like
+5. Learn their preferred therapist style (structured/tools-focused vs exploratory/listening)
+6. Gather practical needs: telehealth vs in-person, insurance requirements
+
+Rules:
+- Ask ONE focused question per turn
+- Be warm, validating, conversational — never clinical or formal
+- Acknowledge what they share before asking the next question
+- Adapt naturally to their answers — don't follow a rigid script
+- Keep each response to 2–4 sentences maximum
+- Never suggest diagnoses or use clinical labels
+- If someone expresses suicidal thoughts or crisis, respond with genuine care and tell them to call or text 988 immediately
+- Once you've naturally covered all 6 areas (after roughly 6–8 exchanges), end your final message with the exact token: [INTERVIEW_COMPLETE]
+- Do not add [INTERVIEW_COMPLETE] until you have gathered enough information across all 6 areas`;
+
+// ── Navigation ───────────────────────────────────────────
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function startChat(){ show('s-chat'); fromChat=true; history=[]; exchangeCount=0; setProgress(0); setTimeout(()=>sageSpeak(null),400); }
+function viewSample(){ if(!profileData)loadSample(); show('s-profile'); switchTab('profile'); }
+function goBack(){ stopAudio(); stopListening(); show(fromChat?'s-chat':'s-welcome'); }
+
+// ── Gender & mode ─────────────────────────────────────────
+function setGender(g){
+  gender=g;
+  document.getElementById('g-female').classList.toggle('active',g==='female');
+  document.getElementById('g-male').classList.toggle('active',g==='male');
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('btn-voice').classList.toggle('active',m==='voice');
+  document.getElementById('btn-text').classList.toggle('active',m==='text');
+  document.getElementById('voice-ui').style.display=m==='voice'?'flex':'none';
+  document.getElementById('text-ui').style.display=m==='text'?'block':'none';
+  if(m==='text'){stopAudio();stopListening();}
+}
+
+// ── Status helpers ────────────────────────────────────────
+function setStatus(t){ document.getElementById('status').textContent=t; }
+function setProgress(pct){ document.getElementById('progress').style.width=Math.min(pct,100)+'%'; }
+
+function setMicState(state){
+  const btn=document.getElementById('mic-btn');
+  const lbl=document.getElementById('mic-label');
+  const rip=document.getElementById('ripple');
+  btn.className='mic-btn';
+  rip.className='ripple';
+  lbl.className='mic-label';
+  // reset svg colours
+  setSvgColor('#4a7c59');
+  if(state==='idle'){ lbl.textContent='Tap to speak'; setStatus('Here to listen'); stopBars(); }
+  else if(state==='listening'){ btn.classList.add('listening'); rip.classList.add('on'); lbl.classList.add('on'); lbl.textContent='Listening… tap to send'; setStatus('Listening…'); setSvgColor('white'); }
+  else if(state==='speaking'){ btn.classList.add('speaking'); lbl.classList.add('speaking'); lbl.textContent='Sage is speaking…'; setStatus('Speaking…'); setSvgColor('var(--warm)'); animBars('warm'); }
+  else if(state==='thinking'){ btn.classList.add('thinking'); lbl.textContent='Thinking…'; setStatus('Thinking…'); setSvgColor('#bbb'); }
+}
+
+function setSvgColor(c){
+  document.getElementById('mic-svg').querySelectorAll('[fill]:not([fill="none"]),[stroke]:not([stroke="none"])').forEach(el=>{
+    if(el.getAttribute('fill')&&el.getAttribute('fill')!=='none') el.setAttribute('fill',c);
+    if(el.getAttribute('stroke')&&el.getAttribute('stroke')!=='none') el.setAttribute('stroke',c);
+  });
+}
+
+// ── Bar animation ─────────────────────────────────────────
+function animBars(src){
+  stopBars();
+  const bars=document.querySelectorAll('#bars .bar');
+  if(src==='analyser'&&analyser){
+    const data=new Uint8Array(analyser.frequencyBinCount);
+    function draw(){
+      analyser.getByteFrequencyData(data);
+      bars.forEach((b,i)=>{ b.style.height=Math.max(3,(data[Math.floor(i*data.length/bars.length)]/255)*18)+'px'; b.style.background='var(--sage)'; });
+      barTimer=requestAnimationFrame(draw);
+    }
+    draw();
+  } else {
+    const col=src==='warm'?'var(--warm)':'var(--sage)';
+    function draw(){ bars.forEach(b=>{ b.style.height=(3+Math.random()*15)+'px'; b.style.background=col; }); barTimer=setTimeout(draw,110); }
+    draw();
+  }
+}
+function stopBars(){
+  if(barTimer){ cancelAnimationFrame(barTimer); clearTimeout(barTimer); barTimer=null; }
+  document.querySelectorAll('#bars .bar').forEach(b=>{ b.style.height='4px'; b.style.background='var(--sage-mid)'; });
+}
+
+// ── ElevenLabs TTS ────────────────────────────────────────
+async function speak(text){
+  stopAudio();
+  setMicState('thinking');
+  try{
+    const res=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICES[gender]}`,{
+      method:'POST',
+      headers:{'xi-api-key':XI_KEY,'Content-Type':'application/json','Accept':'audio/mpeg'},
+      body:JSON.stringify({ text:text.replace(/[*_~`\[.*?\]]/g,''), model_id:'eleven_turbo_v2_5', voice_settings:{stability:0.55,similarity_boost:0.80,style:0.2,use_speaker_boost:true} })
+    });
+    if(!res.ok) throw new Error();
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    currentAudio=new Audio(url);
+    isSpeaking=true;
+    setMicState('speaking');
+    animBars('warm');
+    currentAudio.onended=()=>{ isSpeaking=false; URL.revokeObjectURL(url); stopBars(); setMicState('idle'); if(mode==='voice'&&!isThinking) setTimeout(startListening,300); };
+    currentAudio.onerror=()=>{ isSpeaking=false; stopBars(); setMicState('idle'); };
+    currentAudio.play();
+  } catch(e){
+    // browser TTS fallback
+    const synth=window.speechSynthesis;
+    if(!synth){ setMicState('idle'); return; }
+    synth.cancel();
+    const utt=new SpeechSynthesisUtterance(text.replace(/\[.*?\]/g,''));
+    utt.rate=0.93; utt.pitch=gender==='female'?1.1:0.85;
+    const vv=synth.getVoices();
+    const pick=gender==='female'
+      ? vv.find(v=>v.name.includes('Samantha')||v.name.includes('Karen')||v.name.includes('Moira'))
+      : vv.find(v=>v.name.includes('Daniel')||v.name.includes('Alex')||v.name.includes('Fred'));
+    if(pick) utt.voice=pick;
+    isSpeaking=true; setMicState('speaking'); animBars('warm');
+    utt.onend=()=>{ isSpeaking=false; stopBars(); setMicState('idle'); if(mode==='voice'&&!isThinking) setTimeout(startListening,300); };
+    synth.speak(utt);
+  }
+}
+
+function stopAudio(){
+  if(currentAudio){ currentAudio.pause(); currentAudio=null; }
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  isSpeaking=false; stopBars();
+}
+
+// ── Speech recognition ────────────────────────────────────
+function handleMicTap(){
+  if(isThinking) return;
+  if(isSpeaking){ stopAudio(); setMicState('idle'); return; }
+  if(isListening){ stopListening(); if(pending.trim()) processVoice(); else setMicState('idle'); }
+  else startListening();
+}
+
+async function startListening(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    setMicLabel('Voice not supported — use Type mode','err');
+    setMode('text');
+    return;
+  }
+  // Request mic for waveform
+  try{
+    if(!micStream){
+      micStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      analyser=audioCtx.createAnalyser(); analyser.fftSize=64;
+      audioCtx.createMediaStreamSource(micStream).connect(analyser);
+    }
+    animBars('analyser');
+  } catch(e){ animBars('listening'); }
+
+  pending='';
+  recognition=new (window.SpeechRecognition||window.webkitSpeechRecognition)();
+  recognition.continuous=true; recognition.interimResults=true; recognition.lang='en-US';
+  recognition.onstart=()=>{ isListening=true; setMicState('listening'); };
+  recognition.onresult=(e)=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) pending+=e.results[i][0].transcript+' ';
+      else interim=e.results[i][0].transcript;
+    }
+    const disp=(pending+interim).trim();
+    document.getElementById('mic-label').textContent=disp?disp.slice(0,44)+(disp.length>44?'…':''):'Listening… tap to send';
+  };
+  recognition.onerror=(e)=>{
+    stopListening();
+    if(e.error==='not-allowed'||e.error==='permission-denied'){
+      setMicLabel('Mic access denied — use Type mode','err');
+      setMode('text');
+    } else {
+      setMicLabel('Tap to speak','');
+    }
+  };
+  recognition.onend=()=>{ isListening=false; };
+  try{ recognition.start(); }
+  catch(e){ setMicLabel('Tap to speak',''); }
+}
+
+function stopListening(){
+  if(recognition){ try{recognition.stop();}catch(e){} recognition=null; }
+  isListening=false; stopBars();
+}
+
+function setMicLabel(text,cls){
+  const lbl=document.getElementById('mic-label');
+  lbl.textContent=text; lbl.className='mic-label'+(cls?' '+cls:'');
+}
+
+function processVoice(){
+  const text=pending.trim(); pending='';
+  setMicState('idle');
+  if(!text) return;
+  addUserMsg(text);
+  handleResponse(text);
+}
+
+// ── Chat messages ─────────────────────────────────────────
+function addAIMsg(text){
+  const msgs=document.getElementById('messages');
+  const el=document.createElement('div'); el.className='msg ai';
+  el.innerHTML=`<div class="bubble">${text.replace(/\[INTERVIEW_COMPLETE\]/g,'')}</div>`;
+  msgs.appendChild(el); msgs.scrollTop=msgs.scrollHeight;
+}
+function addUserMsg(text){
+  const msgs=document.getElementById('messages');
+  const el=document.createElement('div'); el.className='msg user';
+  el.innerHTML=`<div class="bubble">${text}</div>`;
+  msgs.appendChild(el); msgs.scrollTop=msgs.scrollHeight;
+  history.push({role:'user',content:text});
+}
+function showTyping(){
+  const msgs=document.getElementById('messages');
+  const el=document.createElement('div'); el.className='typing-bubble'; el.id='typing';
+  el.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  msgs.appendChild(el); msgs.scrollTop=msgs.scrollHeight;
+}
+function hideTyping(){ const t=document.getElementById('typing'); if(t) t.remove(); }
+function setQRs(replies){
+  const qrs=document.getElementById('qrs'); qrs.innerHTML='';
+  replies.forEach(r=>{ const b=document.createElement('button'); b.className='qr'; b.textContent=r; b.onclick=()=>{ document.getElementById('chat-input').value=r; sendText(); }; qrs.appendChild(b); });
+}
+
+// ── Sage AI conversation ──────────────────────────────────
+async function sageSpeak(userText){
+  isThinking=true; setMicState('thinking');
+  showTyping();
+  try{
+    const msgs=history.length===0
+      ? [{role:'user',content:'[Begin the interview. Introduce yourself briefly and ask your first question.]'}]
+      : history;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:300, system:SAGE_SYSTEM, messages:msgs })
+    });
+    const data=await res.json();
+    const reply=data.content.map(b=>b.text||'').join('').trim();
+    hideTyping();
+    history.push({role:'assistant',content:reply});
+    addAIMsg(reply);
+    exchangeCount++;
+    setProgress(Math.min((exchangeCount/8)*100,90));
+    isThinking=false;
+    if(reply.includes('[INTERVIEW_COMPLETE]')){
+      setProgress(95);
+      setTimeout(()=>generateProfile(),1200);
+    } else {
+      if(mode==='voice') speak(reply);
+    }
+  } catch(e){
+    hideTyping(); isThinking=false;
+    const fallback="I'm having a little trouble connecting right now. Could you try again?";
+    addAIMsg(fallback); if(mode==='voice') speak(fallback);
+  }
+}
+
+function handleResponse(userText){ sageSpeak(userText); }
+function sendText(){
+  const inp=document.getElementById('chat-input');
+  const text=inp.value.trim(); if(!text||isThinking) return;
+  inp.value=''; inp.style.height='auto';
+  addUserMsg(text); setQRs([]); sageSpeak(text);
+}
+
+// ── Profile generation ────────────────────────────────────
+async function generateProfile(){
+  isThinking=true;
+  const transcript=history.map(m=>`${m.role==='user'?'User':'Sage'}: ${m.content}`).join('\n');
+  const closingMsg="Give me just a moment to put together your personal profile and find your best matches…";
+  addAIMsg(closingMsg);
+  if(mode==='voice') speak(closingMsg);
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1400,
+        system:`You are PsyConnect's profile generator. Based on the conversation transcript, generate a warm, human, non-clinical profile. Respond ONLY with valid JSON, no markdown, no extra text. Schema:
+{"name":"short warm label e.g. Navigating anxiety and burnout","tagline":"2 warm validating sentences","tags":["3-5 short tags"],"challenges":"2-3 plain empathetic sentences about what they are working through","recommendations":"2-3 sentences on what kind of therapist and approach would suit them","therapistSummary":"3-4 sentence professional referral note in third person with no diagnosis","therapists":[{"name":"Dr. Sarah Chen","title":"Licensed Psychologist · CBT","initials":"SC","color":"#e8f0eb","textColor":"#4a7c59","score":"94% match","why":"one warm specific sentence tied to what they shared","fits":["Specialty matches their needs","Accepts insurance","Telehealth available","Evening slots"]},{"name":"Marcus Webb, LCSW","title":"Licensed Clinical Social Worker","initials":"MW","color":"#f5ede3","textColor":"#8a5e38","score":"89% match","why":"one warm specific sentence","fits":["Work and life transitions","Sliding scale","In-person available","Direct style"]},{"name":"Dr. Priya Nair","title":"Psychologist · Mindfulness-based","initials":"PN","color":"#eaf3de","textColor":"#3d6849","score":"85% match","why":"one warm specific sentence","fits":["Anxiety and burnout","Holistic approach","Telehealth","Sliding scale"]}]}`,
+        messages:[{role:'user',content:`Conversation:\n${transcript}\n\nGenerate the profile JSON.`}]
+      })
+    });
+    const data=await res.json();
+    const raw=data.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+    profileData=JSON.parse(raw);
+    renderProfile(profileData);
+    isThinking=false; setProgress(100);
+    const doneMsg="Your profile is ready! I've found 3 therapists who could be a really good fit for you.";
+    addAIMsg(doneMsg);
+    if(mode==='voice') speak(doneMsg);
+    setTimeout(()=>{
+      const msgs=document.getElementById('messages');
+      const btn=document.createElement('button'); btn.className='btn-primary'; btn.style.margin='4px 0 8px';
+      btn.textContent='See my profile & matches →';
+      btn.onclick=()=>{ fromChat=true; show('s-profile'); switchTab('profile'); };
+      msgs.appendChild(btn); msgs.scrollTop=msgs.scrollHeight;
+    },1600);
+  } catch(e){
+    loadSample(); isThinking=false;
+    const fallback="Your profile is ready — tap below to see your matches.";
+    addAIMsg(fallback); if(mode==='voice') speak(fallback);
+    setTimeout(()=>{
+      const msgs=document.getElementById('messages');
+      const btn=document.createElement('button'); btn.className='btn-primary'; btn.style.margin='4px 0 8px';
+      btn.textContent='See my profile & matches →';
+      btn.onclick=()=>{ fromChat=true; show('s-profile'); switchTab('profile'); };
+      msgs.appendChild(btn); msgs.scrollTop=msgs.scrollHeight;
+    },800);
+  }
+}
+
+// ── Profile render ────────────────────────────────────────
+function renderProfile(p){
+  document.getElementById('p-name').textContent=p.name||'';
+  document.getElementById('p-tagline').textContent=p.tagline||'';
+  const tr=document.getElementById('p-tags'); tr.innerHTML='';
+  (p.tags||[]).forEach((t,i)=>{ const s=document.createElement('span'); s.className='tag '+(i%2===0?'s':'w'); s.textContent=t; tr.appendChild(s); });
+  document.getElementById('p-challenges').textContent=p.challenges||'';
+  document.getElementById('p-recs').textContent=p.recommendations||'';
+  document.getElementById('p-summary').textContent=p.therapistSummary||'';
+  const mc=document.getElementById('matches'); mc.innerHTML='';
+  (p.therapists||[]).forEach(t=>{
+    const c=document.createElement('div'); c.className='mcard';
+    c.innerHTML=`<div class="mscore">${t.score}</div><div class="mtop"><div class="avatar" style="background:${t.color};color:${t.textColor};">${t.initials}</div><div><div style="font-size:14px;font-weight:500;color:var(--text);">${t.name}</div><div style="font-size:12px;color:var(--text-muted);margin-top:1px;">${t.title}</div></div></div><div class="mwhy">"${t.why}"</div><div>${(t.fits||[]).map(f=>`<div class="frow"><div class="fdot"></div>${f}</div>`).join('')}</div><button class="cbtn">Contact ${t.name.split(' ')[0]} →</button>`;
+    mc.appendChild(c);
+  });
+}
+
+function loadSample(){
+  profileData={name:"Navigating anxiety & burnout",tagline:"You've been carrying a lot lately — the pressure has built up and it's starting to affect your day-to-day. That's a real and valid thing to want support with.",tags:["Anxiety","Work stress","Burnout","Overwhelm"],challenges:"You're dealing with persistent anxiety tied to work pressure and everyday demands. It's been going on long enough that it feels like your baseline — which makes it harder to recognize how much you're actually carrying.",recommendations:"A therapist who specializes in anxiety and uses structured approaches like CBT would likely resonate with you. Telehealth might suit your schedule, and you'd connect well with someone calm and grounded who balances listening with practical tools.",therapistSummary:"The client is seeking support for ongoing anxiety and stress which has been building over time and affecting daily functioning. They have some prior therapy experience and want a structured tools-based approach with genuine emotional support. A warm collaborative therapist with experience in anxiety and burnout would be well suited.",therapists:[{name:"Dr. Sarah Chen",title:"Licensed Psychologist · CBT",initials:"SC",color:"#e8f0eb",textColor:"#4a7c59",score:"94% match",why:"Her CBT approach and calm collaborative style aligns closely with what you described.",fits:["Specialty: Anxiety, stress","Accepts most insurance","Telehealth available","Evening appointments"]},{name:"Marcus Webb, LCSW",title:"Licensed Clinical Social Worker",initials:"MW",color:"#f5ede3",textColor:"#8a5e38",score:"89% match",why:"Marcus specializes in burnout with a practical solutions-focused style.",fits:["Work & life stress","Sliding scale available","In-person in your area","Direct, practical style"]},{name:"Dr. Priya Nair",title:"Psychologist · Mindfulness-based",initials:"PN",color:"#eaf3de",textColor:"#3d6849",score:"85% match",why:"Dr. Nair blends mindfulness with evidence-based therapy for persistent anxiety.",fits:["Anxiety & burnout","Holistic & somatic approach","Telehealth available","Sliding scale options"]}]};
+  renderProfile(profileData);
+}
+function switchTab(tab){
+  document.getElementById('t-profile').classList.toggle('active',tab==='profile');
+  document.getElementById('t-matches').classList.toggle('active',tab==='matches');
+  document.getElementById('v-profile').style.display=tab==='profile'?'block':'none';
+  document.getElementById('v-matches').style.display=tab==='matches'?'block':'none';
+  document.getElementById('pscroll').scrollTop=0;
+}
+loadSample();
+</script>
