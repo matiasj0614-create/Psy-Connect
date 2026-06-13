@@ -1,9 +1,4 @@
-{
-  "extends": "../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "types": ["node"]
-  },
-  "include": ["src"]
-}
+#!/bin/bash
+set -e
+pnpm install --frozen-lockfile
+pnpm --filter db push
